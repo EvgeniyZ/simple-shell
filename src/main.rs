@@ -2,16 +2,35 @@ use std::io::stdin;
 use std::io::stdout;
 use std::io::Write;
 use std::process::Command;
+use std::process::Child;
+use std::str::SplitWhitespace;
+use std::io::Error;
 
 fn main() {
-    let mut input = String::new();
+    loop {
+        print!("> ");
+        stdout().flush();
 
-    stdout().write("Console started, press command:\n".as_bytes());
-    stdin().read_line(&mut input).unwrap();
+        let mut input = String::new();
+        stdin().read_line(&mut input).unwrap();
 
-    let command = input.trim();
+        let parts = input.trim()
+            .split_whitespace();
 
-    Command::new(command)
-        .spawn()
-        .unwrap();
+        let child = exec_command(parts);
+
+        match child {
+            Ok(mut child) => { child.wait(); },
+            Err(e) => eprintln!("{}", e),
+        };
+    }    
+}
+
+fn exec_command(mut parts: SplitWhitespace) -> Result<Child, Error> {
+    let command = parts.next().unwrap();
+    let args = parts;
+
+    return Command::new(command)
+                .args(args)
+                .spawn();
 }
